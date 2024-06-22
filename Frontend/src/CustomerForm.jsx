@@ -1,7 +1,8 @@
 // src/CustomerForm.js
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Button, notification } from 'antd';
+import { Modal, Form, Input, Button,  notification, Table, Popconfirm } from 'antd';
 import axios from 'axios';
+import { DeleteOutlined } from '@ant-design/icons';
 
 const CustomerForm = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -50,6 +51,59 @@ const CustomerForm = () => {
     setIsModalVisible(false);
   };
 
+  const handleDelete = async (id) => {
+    try {
+      const response = await axios.delete(`http://localhost:3000/customers/${id}`);
+      if (response.status === 200) {
+        notification.success({ message: 'Success', description: 'Customer Deleted Successfully' });
+        fetchCustomers(); // Refresh the customer list
+      }
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      notification.error({
+        message: 'Error',
+        description: error.response?.data.message || 'Something went wrong',
+      });
+    }
+  };
+
+  const columns = [
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      key: 'name',
+    },
+    {
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
+    },
+    {
+      title: 'Phone',
+      dataIndex: 'phone',
+      key: 'phone',
+    },
+    {
+      title: 'Address',
+      dataIndex: 'address',
+      key: 'address',
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      render: (text, record) => (
+        <Popconfirm
+          title="Are you sure delete this customer?"
+          onConfirm={() => handleDelete(record._id)}
+          okText="Yes"
+          cancelText="No"
+        >
+          <Button type="link" icon={<DeleteOutlined />} danger>Delete</Button>
+        </Popconfirm>
+      ),
+    },
+  ];
+
   return (
     <>
       <Button type="primary" onClick={showModal}>Add Customer</Button>
@@ -81,26 +135,7 @@ const CustomerForm = () => {
           </Form.Item>
         </Form>
       </Modal>
-      <table style={{ marginTop: '20px', width: '100%', border: '1px solid #ddd', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Name</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Email</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Phone</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Address</th>
-          </tr>
-        </thead>
-        <tbody>
-          {customers.map((customer) => (
-            <tr key={customer._id}>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{customer.name}</td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{customer.email}</td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{customer.phone}</td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{customer.address}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <Table columns={columns} dataSource={customers} rowKey="_id" style={{ marginTop: '20px' }} />
     </>
   );
 };
