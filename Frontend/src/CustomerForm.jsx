@@ -10,7 +10,11 @@ import {
   Popconfirm,
 } from "antd";
 import axios from "axios";
-import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
 
 const CustomerForm = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -18,11 +22,14 @@ const CustomerForm = () => {
   const [customers, setCustomers] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [currentCustomer, setCurrentCustomer] = useState(null);
+  const [filteredCustomers, setFilteredCustomers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchCustomers = async () => {
     try {
       const response = await axios.get("http://localhost:3000/customers");
       setCustomers(response.data.customers);
+      setFilteredCustomers(response.data.customers); // Initialize filtered customers
     } catch (error) {
       console.error("Error fetching customers:", error);
     }
@@ -32,7 +39,18 @@ const CustomerForm = () => {
     fetchCustomers();
   }, []);
 
+  const handleSearch = (value) => {
+    setSearchQuery(value);
+    const filtered = customers.filter((customer) =>
+      customer.name.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredCustomers(filtered);
+  };
+
   const showModal = () => {
+    form.resetFields();
+    setCurrentCustomer(null);
+    setIsEditing(false);
     setIsModalVisible(true);
   };
 
@@ -158,6 +176,13 @@ const CustomerForm = () => {
 
   return (
     <>
+      <Input.Search
+        placeholder="Search by name"
+        value={searchQuery}
+        onChange={(e) => handleSearch(e.target.value)}
+        style={{ width: 200, marginBottom: 8,marginRight:10 }}
+        prefix={<SearchOutlined />}
+      />
       <Button type="primary" onClick={showModal}>
         Add Customer
       </Button>
@@ -203,7 +228,7 @@ const CustomerForm = () => {
       </Modal>
       <Table
         columns={columns}
-        dataSource={customers}
+        dataSource={filteredCustomers}
         rowKey="_id"
         style={{ marginTop: "20px" }}
       />
