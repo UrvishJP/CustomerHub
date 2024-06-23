@@ -8,12 +8,15 @@ import {
   notification,
   Table,
   Popconfirm,
+  Menu,
+  Dropdown,
 } from "antd";
 import axios from "axios";
 import {
   DeleteOutlined,
   EditOutlined,
   SearchOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 
 const CustomerForm = () => {
@@ -24,12 +27,16 @@ const CustomerForm = () => {
   const [currentCustomer, setCurrentCustomer] = useState(null);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedEmail, setSelectedEmail] = useState(null);
+  const [emailOptions, setEmailOptions] = useState([]);
 
   const fetchCustomers = async () => {
     try {
       const response = await axios.get("http://localhost:3000/customers");
       setCustomers(response.data.customers);
       setFilteredCustomers(response.data.customers); // Initialize filtered customers
+      const emails = response.data.customers.map(customer => customer.email);
+      setEmailOptions([...new Set(emails)]); // Deduplicate and set email options
     } catch (error) {
       console.error("Error fetching customers:", error);
     }
@@ -45,6 +52,20 @@ const CustomerForm = () => {
       customer.name.toLowerCase().includes(value.toLowerCase())
     );
     setFilteredCustomers(filtered);
+  };
+
+  const handleFilterByEmail = (email) => {
+    setSelectedEmail(email);
+    const filtered = customers.filter((customer) => customer.email === email);
+    applyFilters(filtered, email);
+  };
+
+  const applyFilters = (data, emailFilter) => {
+    let filteredData = data;
+    if (emailFilter) {
+      filteredData = data.filter((customer) => customer.email === emailFilter);
+    }
+    setFilteredCustomers(filteredData);
   };
 
   const showModal = () => {
@@ -174,6 +195,16 @@ const CustomerForm = () => {
     },
   ];
 
+  const menu = (
+    <Menu>
+      {emailOptions.map((email) => (
+        <Menu.Item key={email} onClick={() => handleFilterByEmail(email)}>
+          {email}
+        </Menu.Item>
+      ))}
+    </Menu>
+  );
+
   return (
     <>
       <Input.Search
@@ -186,6 +217,11 @@ const CustomerForm = () => {
       <Button type="primary" onClick={showModal}>
         Add Customer
       </Button>
+      <Dropdown overlay={menu}>
+        <Button style={{ marginLeft:10 }}>
+          Filter By Email <DownOutlined />
+        </Button>
+      </Dropdown>
       <Modal
         title={isEditing ? "Edit Customer" : "Create Customer"}
         visible={isModalVisible}
