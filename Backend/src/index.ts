@@ -1,7 +1,9 @@
-import { MongoClient } from "mongodb";
-const express = require("express");
-const body = require("body-parser");
-const cors = require("cors");
+import { MongoClient } from 'mongodb';
+import express from 'express';
+import body from 'body-parser';
+import cors from 'cors';
+
+import customersRouter from './routes/customers';
 
 const start = async () => {
   try {
@@ -10,30 +12,26 @@ const start = async () => {
     // Enable CORS
     app.use(cors());
 
-    const mongo = await MongoClient.connect(
-      "mongodb://localhost:27017/CRM_API"
-    );
-
-    await mongo.connect();
-
+    const mongo = await MongoClient.connect('mongodb://localhost:27017/CRM_API');
     app.db = mongo.db();
 
-    //body parser
+    // Body parser middleware
     app.use(
       body.json({
-        limit: "500kb",
+        limit: '500kb',
       })
     );
 
-    //routes
-    app.use("/customers", require("./routes/customers"));
+    // Mounting routers
+    app.use('/customers', customersRouter);
 
-    //start server
-    app.listen(3000, () => {
-      console.log("Server is running on port 3000");
+    // Start server
+    const PORT = 3000;
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
     });
   } catch (error) {
-    console.log(error);
+    console.error('Error starting server:', error);
   }
 };
 
